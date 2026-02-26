@@ -1,0 +1,48 @@
+[package]
+name = "axum-chat-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.8.8", features = ["macros", "ws"] }
+tokio = { version = "1.44", features = ["full"] }
+tower = "0.5.2"
+tower-http = { version = "0.6", features = ["trace", "cors"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+async-trait = "0.1"
+
+serde = { version = "1.0.211", features = ["derive"] }
+serde_json = "1.0"
+
+sqlx = { version = "0.8.6", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "macros",
+    "migrate",
+] }
+
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4.43", features = ["serde"] }
+
+argon2 = "0.5"
+jsonwebtoken = "9"
+rand_core = "0.6"
+
+dotenvy = "0.15"
+
+anyhow = "1.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+tokio = { version = "1.44", features = ["full"] }
+
+# Force a `home` crate version compatible with Rust 1.78 (avoids edition2024).
+home = "=0.5.9"
+
+[profile.release]
+debug = false
+lto = "thin"
+codegen-units = 1
