@@ -1,28 +1,90 @@
-:root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #e5e7eb;
-  background-color: #020617;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "tailwindcss";
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  button {
+    border: none;
+    font: inherit;
+    cursor: pointer;
+  }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@theme {
+  --color-brand: #5865f2;
+  --color-brand-hover: #4752c4;
+  --color-brand-light: #818cf8;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-card-in: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-fade-up: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-error-in: error-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
-button {
-  border: none;
-  font: inherit;
-  cursor: pointer;
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Auth screen transitions */
+.auth-card-enter {
+  animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-card-enter .auth-logo-wrap {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+.auth-card-enter .auth-illustration-wrap {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+.auth-card-enter .auth-toggle-wrap {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+.auth-card-enter .auth-form-wrap {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+.auth-error-enter {
+  animation: error-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
