@@ -1,0 +1,9 @@
+# Render Blueprint: backend only. Database (Neon) and frontend (Vercel) are separate.
+# Docs: https://docs.render.com/blueprint-spec
+services:
+  - type: web
+    runtime: docker
+    name: axum-chat-service
+    # Render sets PORT (e.g. 10000); app reads PORT in config.
+    healthCheckPath: /api/health
+    # Set in Render Dashboard: DATABASE_URL, JWT_SECRET, optional ALLOWED_ORIGINS

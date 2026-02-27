@@ -180,3 +180,21 @@ Token may be expired. Log out and log in again in the web app to get a new token
 - Tune `DATABASE_MAX_CONNECTIONS` and Postgres settings for your load.
 - Logging uses `tracing`; integrate with your log aggregation.
 - **Frontend:** Run `npm run build` in `web/`, then serve the `web/dist` directory with your static host or reverse proxy.
+
+### Suggested free-tier deployment stack
+
+All of the following have free tiers (always check current limits before production use):
+
+- **Backend (Axum API + WebSockets): Render**
+  - New Web Service → connect repo → **Runtime: Docker** → **Free** instance.
+  - Set env vars: `DATABASE_URL`, `JWT_SECRET`, and (after frontend is live) `ALLOWED_ORIGINS`.
+  - Render uses the repo’s `Dockerfile`; the app reads `PORT` automatically.
+- **Database (Postgres): Neon**
+  - Create a free project at [neon.tech](https://neon.tech), copy the connection string, use it as `DATABASE_URL` on Render.
+- **Frontend (React app): Vercel**
+  - Import the repo; set **Root Directory** to `web`.
+  - Set `VITE_API_BASE` and `VITE_WS_BASE` to your Render backend URL (e.g. `https://axum-chat-service.onrender.com` and `wss://...`).
+
+**Note:** Render’s free tier spins down after inactivity; the first request after that may be slow. For always-on backend you’d need a paid plan (e.g. Render paid or Fly.io).
+
+**Step-by-step:** See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions (Render, Neon, Vercel, env vars, and CORS).

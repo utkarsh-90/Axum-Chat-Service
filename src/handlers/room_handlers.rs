@@ -9,7 +9,7 @@ use crate::{
     auth::extractor::AuthUser,
     db::{
         messages::{list_messages_before, list_recent_messages_with_usernames},
-        rooms::{create_room, get_room, list_rooms},
+        rooms::{create_room, get_room_if_member, list_rooms_for_user},
     },
     error::{AppError, AppResult},
     models::room::{CreateRoomRequest, Room},
@@ -29,33 +29,47 @@ fn default_limit() -> i64 {
 
 pub async fn list_rooms_handler(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
 ) -> AppResult<Json<Vec<Room>>> {
-    let rooms = list_rooms(&state.db).await?;
+    let rooms = list_rooms_for_user(&state.db, auth.user_id).await?;
     Ok(Json(rooms))
 }
 
 pub async fn create_room_handler(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(payload): Json<CreateRoomRequest>,
 ) -> AppResult<Json<Room>> {
     if payload.name.trim().is_empty() {
         return Err(AppError::BadRequest("room name must not be empty".into()));
     }
 
-    let room = create_room(&state.db, &payload.name).await?;
+    let room = create_room(&state.db, auth.user_id, &payload.name).await?;
     Ok(Json(room))
 }
 
 pub async fn join_room_handler(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
-    _auth: AuthUser,
+    auth: AuthUser,
 ) -> AppResult<Json<Room>> {
-    let room = get_room(&state.db, room_id)
+    // Ensure room exists.
+    let room = crate::db::rooms::get_room_by_id(&state.db, room_id)
         .await?
         .ok_or_else(|| AppError::NotFound("room not found".into()))?;
+
+    // Add membership (idempotent).
+    sqlx::query(
+        r#"
+        INSERT INTO room_members (room_id, user_id, role)
+        VALUES ($1, $2, 'member')
+        ON CONFLICT (room_id, user_id) DO NOTHING
+        "#,
+    )
+    .bind(room_id)
+    .bind(auth.user_id)
+    .execute(&state.db)
+    .await?;
 
     // Optionally, we could preload recent messages here as metadata.
     Ok(Json(room))
@@ -65,9 +79,9 @@ pub async fn list_room_messages_handler(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
     Query(q): Query<ListMessagesQuery>,
-    _auth: AuthUser,
+    auth: AuthUser,
 ) -> AppResult<Json<Vec<crate::models::message::MessageWithUsername>>> {
-    let _room = get_room(&state.db, room_id)
+    let _room = get_room_if_member(&state.db, room_id, auth.user_id)
         .await?
         .ok_or_else(|| AppError::NotFound("room not found".into()))?;
 

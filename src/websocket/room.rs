@@ -12,7 +12,10 @@ use uuid::Uuid;
 
 use crate::{
     auth::{extractor::AuthUser, jwt::validate_token},
-    db::messages::{create_message, list_recent_messages_with_usernames},
+    db::{
+        messages::{create_message, list_recent_messages_with_usernames},
+        rooms::get_room_if_member,
+    },
     error::AppError,
     models::message::{
         IncomingWsMessage, OutgoingWsMessage, WsMessageKind, MAX_MESSAGE_LEN,
@@ -52,12 +55,20 @@ async fn handle_socket(
     room_id: Uuid,
     auth: AuthUser,
 ) {
-    // Ensure room exists; if not, close connection.
+    // Ensure room exists and user is a member.
     if let Err(e) = ensure_room_exists(&state, room_id).await {
         tracing::warn!("refusing WS connection for missing room: {e}");
-        let _ = socket
-            .send(Message::Close(None))
-            .await;
+        let _ = socket.send(Message::Close(None)).await;
+        return;
+    }
+    if get_room_if_member(&state.db, room_id, auth.user_id)
+        .await
+        .ok()
+        .flatten()
+        .is_none()
+    {
+        tracing::warn!("refusing WS connection: user {} not a member of room {}", auth.user_id, room_id);
+        let _ = socket.send(Message::Close(None)).await;
         return;
     }
 
@@ -231,6 +242,14 @@ async fn handle_incoming_message(
     }
     if content.len() > MAX_MESSAGE_LEN {
         return Ok(());
+    }
+
+    // Enforce that the sender is a member of the room.
+    let is_member = get_room_if_member(&state.db, room_id, auth.user_id)
+        .await?
+        .is_some();
+    if !is_member {
+        return Err(AppError::Forbidden("not a member of this room".into()));
     }
 
     let message = create_message(&state.db, room_id, auth.user_id, &content).await?;

@@ -8,6 +8,7 @@ pub struct Room {
     pub id: Uuid,
     pub name: String,
     pub created_at: DateTime<Utc>,
+    pub owner_user_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
