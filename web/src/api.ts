@@ -47,6 +47,12 @@ export async function createRoom(auth: AuthState, name: string): Promise<Room> {
   return res.json()
 }
 
+export async function joinRoom(auth: AuthState, roomId: string): Promise<Room> {
+  const res = await authFetch(`/api/rooms/${roomId}/join`, { method: 'POST' }, auth.token)
+  if (!res.ok) throw new Error(await res.text() || `Failed to join room: ${res.status}`)
+  return res.json()
+}
+
 export function buildWsUrl(roomId: string, token: string): string {
   return `${WS_BASE}/ws/rooms/${roomId}?token=${encodeURIComponent(token)}`
 }
